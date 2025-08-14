@@ -13,8 +13,8 @@
     <meta name="apple-mobile-web-app-title" content="MRM ERP">
     
     <!-- Icons -->
-    <link rel="icon" type="image/png" href="https://i.postimg.cc/J0Jw1hMT/image.png">
-    <link rel="apple-touch-icon" href="https://i.postimg.cc/J0Jw1hMT/image.png">
+    <link rel="icon" type="image/png" href="https://i.postimg.cc/SNpkGdHY/image.png">
+    <link rel="apple-touch-icon" href="https://i.postimg.cc/SNpkGdHY/image.png">
     
     <!-- Fonts and External Resources -->
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -32,7 +32,7 @@
     <div id="installBanner" class="install-banner hidden">
         <div class="install-content">
             <div class="install-icon">
-                <img src="https://i.postimg.cc/J0Jw1hMT/image.png" alt="MRM Logo">
+                <img src="https://i.postimg.cc/SNpkGdHY/image.png" alt="MRM Logo">
             </div>
             <div class="install-text">
                 <h3>Install MRM ERP</h3>
@@ -53,7 +53,7 @@
     <div id="iosInstallPrompt" class="ios-install-prompt hidden">
         <div class="ios-prompt-content">
             <div class="ios-prompt-header">
-                <img src="https://i.postimg.cc/J0Jw1hMT/image.png" alt="MRM Logo">
+                <img src="https://i.postimg.cc/SNpkGdHY/image.png" alt="MRM Logo">
                 <h3>Install MRM ERP</h3>
                 <button id="closeIosPrompt" class="ios-close">×</button>
             </div>
@@ -75,7 +75,7 @@
 
     <!-- Currency Selector -->
     <div id="currencySelector" class="currency-selector">
-        <select id="currencySelect">
+        <select id="currencySelect" class="styled-select">
             <option value="INR">₹ INR</option>
             <option value="USD">$ USD</option>
             <option value="EUR">€ EUR</option>
@@ -90,8 +90,9 @@
     <header class="header">
         <div class="container">
             <div class="logo">
-                <img src="https://i.postimg.cc/J0Jw1hMT/image.png" alt="MRM Logo" class="logo-img">
+                <img src="https://i.postimg.cc/SNpkGdHY/image.png" alt="MRM Logo" class="logo-img">
                 <span class="logo-text">MRM ERP</span>
+                <span class="version-badge">v19.5 Pro</span>
             </div>
             
             <!-- Mobile Menu Toggle -->
@@ -243,7 +244,7 @@
                     </div>
                 </div>
 
-                <!-- Quick Actions for Mobile -->
+                <!-- Mobile Quick Actions -->
                 <div class="mobile-quick-actions">
                     <div class="quick-action-grid">
                         <button class="quick-action-btn income-btn" onclick="openTransactionModal('income')">
@@ -358,7 +359,7 @@
                     </div>
                     <div class="filter-group">
                         <label><i class="fas fa-filter"></i> Type:</label>
-                        <select id="typeFilter">
+                        <select id="typeFilter" class="styled-select">
                             <option value="all">All</option>
                             <option value="income">Income</option>
                             <option value="expense">Expense</option>
@@ -366,7 +367,7 @@
                     </div>
                     <div class="filter-group">
                         <label><i class="fas fa-tags"></i> Category:</label>
-                        <select id="categoryFilter">
+                        <select id="categoryFilter" class="styled-select">
                             <option value="all">All Categories</option>
                         </select>
                     </div>
@@ -390,7 +391,7 @@
                     </div>
                     <div class="filter-row">
                         <label>Category:</label>
-                        <select id="mobileCategoryFilter">
+                        <select id="mobileCategoryFilter" class="styled-select">
                             <option value="all">All Categories</option>
                         </select>
                     </div>
@@ -452,10 +453,13 @@
                 </div>
                 
                 <div class="budget-controls">
-                    <select id="budgetPeriod">
-                        <option value="monthly">Monthly</option>
-                        <option value="yearly">Yearly</option>
-                    </select>
+                    <div class="control-group">
+                        <label><i class="fas fa-calendar-alt"></i> Budget Period:</label>
+                        <select id="budgetPeriod" class="styled-select">
+                            <option value="monthly">Monthly Budget</option>
+                            <option value="yearly">Yearly Budget</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="budgets-grid" id="budgetsGrid">
@@ -502,21 +506,27 @@
                 
                 <div class="report-controls">
                     <div class="report-filters">
-                        <select id="reportType">
-                            <option value="summary">Financial Summary</option>
-                            <option value="income">Income Analysis</option>
-                            <option value="expense">Expense Analysis</option>
-                            <option value="cashflow">Cash Flow Report</option>
-                            <option value="category">Category Breakdown</option>
-                        </select>
-                        <select id="reportPeriod">
-                            <option value="month">This Month</option>
-                            <option value="quarter">This Quarter</option>
-                            <option value="year">This Year</option>
-                            <option value="custom">Custom Range</option>
-                        </select>
+                        <div class="control-group">
+                            <label><i class="fas fa-file-alt"></i> Report Type:</label>
+                            <select id="reportType" class="styled-select">
+                                <option value="summary">📊 Financial Summary</option>
+                                <option value="income">💰 Income Analysis</option>
+                                <option value="expense">💸 Expense Analysis</option>
+                                <option value="cashflow">💵 Cash Flow Report</option>
+                                <option value="category">📈 Category Breakdown</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label><i class="fas fa-calendar"></i> Time Period:</label>
+                            <select id="reportPeriod" class="styled-select">
+                                <option value="month">📅 This Month</option>
+                                <option value="quarter">📊 This Quarter</option>
+                                <option value="year">🗓️ This Year</option>
+                                <option value="custom">⚙️ Custom Range</option>
+                            </select>
+                        </div>
                         <button class="btn primary" onclick="generateReport()">
-                            <i class="fas fa-chart-bar"></i> Generate
+                            <i class="fas fa-chart-bar"></i> Generate Report
                         </button>
                     </div>
                 </div>
@@ -572,9 +582,12 @@
                 
                 <div class="about-content">
                     <div class="about-header">
-                        <img src="https://i.postimg.cc/J0Jw1hMT/image.png" alt="MRM Logo" class="about-logo">
+                        <img src="https://i.postimg.cc/SNpkGdHY/image.png" alt="MRM Logo" class="about-logo">
                         <h2>Monthly Recurring Manager</h2>
                         <p class="tagline">World's Most Powerful Expense & Income Management Tool</p>
+                        <div class="version-info">
+                            <span class="version-number">Version 19.5 Pro</span>
+                        </div>
                         <div class="currency-note">
                             <i class="fas fa-globe"></i>
                             <span>Now with Indian Currency Support (₹)</span>
@@ -592,7 +605,7 @@
                         </div>
                         <div class="detail-card">
                             <h3><i class="fas fa-code-branch"></i> Version</h3>
-                            <p>19.3</p>
+                            <p>19.5 Pro</p>
                         </div>
                         <div class="detail-card">
                             <h3><i class="fas fa-calendar-alt"></i> Last Updated</h3>
@@ -707,7 +720,7 @@
         </div>
     </div>
 
-    <!-- Modals (Same as before but with currency support) -->
+    <!-- Modals -->
     <!-- Transaction Modal -->
     <div id="transactionModal" class="modal">
         <div class="modal-content">
@@ -718,9 +731,9 @@
             <form id="transactionForm" class="modal-form">
                 <div class="form-group">
                     <label for="transactionType"><i class="fas fa-exchange-alt"></i> Type:</label>
-                    <select id="transactionType" required>
-                        <option value="income">Income</option>
-                        <option value="expense">Expense</option>
+                    <select id="transactionType" required class="styled-select">
+                        <option value="income">💰 Income</option>
+                        <option value="expense">💸 Expense</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -736,7 +749,7 @@
                 </div>
                 <div class="form-group">
                     <label for="transactionCategory"><i class="fas fa-tags"></i> Category:</label>
-                    <select id="transactionCategory" required>
+                    <select id="transactionCategory" required class="styled-select">
                         <!-- Populated by JavaScript -->
                     </select>
                 </div>
@@ -766,7 +779,7 @@
             <form id="budgetForm" class="modal-form">
                 <div class="form-group">
                     <label for="budgetCategory"><i class="fas fa-tags"></i> Category:</label>
-                    <select id="budgetCategory" required>
+                    <select id="budgetCategory" required class="styled-select">
                         <!-- Populated by JavaScript -->
                     </select>
                 </div>
@@ -779,9 +792,9 @@
                 </div>
                 <div class="form-group">
                     <label for="budgetPeriodType"><i class="fas fa-calendar"></i> Period:</label>
-                    <select id="budgetPeriodType" required>
-                        <option value="monthly">Monthly</option>
-                        <option value="yearly">Yearly</option>
+                    <select id="budgetPeriodType" required class="styled-select">
+                        <option value="monthly">📅 Monthly</option>
+                        <option value="yearly">🗓️ Yearly</option>
                     </select>
                 </div>
                 <div class="form-actions">
@@ -806,14 +819,14 @@
                 </div>
                 <div class="form-group">
                     <label for="categoryType"><i class="fas fa-exchange-alt"></i> Type:</label>
-                    <select id="categoryType" required>
-                        <option value="income">Income</option>
-                        <option value="expense">Expense</option>
+                    <select id="categoryType" required class="styled-select">
+                        <option value="income">💰 Income</option>
+                        <option value="expense">💸 Expense</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="categoryIcon"><i class="fas fa-icons"></i> Icon:</label>
-                    <select id="categoryIcon" required>
+                    <select id="categoryIcon" required class="styled-select">
                         <option value="fas fa-rupee-sign">💰 Money</option>
                         <option value="fas fa-home">🏠 Home</option>
                         <option value="fas fa-car">🚗 Transport</option>
@@ -850,10 +863,10 @@
                 </div>
                 <div class="form-group">
                     <label for="goalType"><i class="fas fa-bullseye"></i> Goal Type:</label>
-                    <select id="goalType" required>
-                        <option value="savings">Savings Goal</option>
-                        <option value="expense_reduction">Expense Reduction</option>
-                        <option value="income_increase">Income Increase</option>
+                    <select id="goalType" required class="styled-select">
+                        <option value="savings">💰 Savings Goal</option>
+                        <option value="expense_reduction">💸 Expense Reduction</option>
+                        <option value="income_increase">📈 Income Increase</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -885,9 +898,9 @@
             <form id="recurringForm" class="modal-form">
                 <div class="form-group">
                     <label for="recurringType"><i class="fas fa-exchange-alt"></i> Type:</label>
-                    <select id="recurringType" required>
-                        <option value="income">Income</option>
-                        <option value="expense">Expense</option>
+                    <select id="recurringType" required class="styled-select">
+                        <option value="income">💰 Income</option>
+                        <option value="expense">💸 Expense</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -903,17 +916,17 @@
                 </div>
                 <div class="form-group">
                     <label for="recurringCategory"><i class="fas fa-tags"></i> Category:</label>
-                    <select id="recurringCategory" required>
+                    <select id="recurringCategory" required class="styled-select">
                         <!-- Populated by JavaScript -->
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="recurringFrequency"><i class="fas fa-clock"></i> Frequency:</label>
-                    <select id="recurringFrequency" required>
-                        <option value="daily">Daily</option>
-                        <option value="weekly">Weekly</option>
-                        <option value="monthly">Monthly</option>
-                        <option value="yearly">Yearly</option>
+                    <select id="recurringFrequency" required class="styled-select">
+                        <option value="daily">📅 Daily</option>
+                        <option value="weekly">📅 Weekly</option>
+                        <option value="monthly">📅 Monthly</option>
+                        <option value="yearly">📅 Yearly</option>
                     </select>
                 </div>
                 <div class="form-group">
