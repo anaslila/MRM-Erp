@@ -17,6 +17,7 @@ let isStandalone = false;
 // Main Application Class
 class MRMApp {
     constructor() {
+        this.version = '19.5 Pro';
         this.currentCurrency = localStorage.getItem('mrm_currency') || 'INR';
         this.transactions = JSON.parse(localStorage.getItem('mrm_transactions')) || [];
         this.categories = JSON.parse(localStorage.getItem('mrm_categories')) || this.getDefaultCategories();
@@ -43,10 +44,42 @@ class MRMApp {
         this.setDefaultDates();
         this.setupConnectionMonitoring();
         this.setupMobileFilters();
+        this.setupDropdownSync(); // Fix for dropdown synchronization
         
         // Set active tab
         const activeTab = localStorage.getItem('mrm_active_tab') || 'dashboard';
         this.switchTab(activeTab);
+
+        // Log version info
+        console.log(`🚀 MRM ERP ${this.version} - Monthly Recurring Manager`);
+        console.log('🇮🇳 Indian Currency (₹) Support Enabled');
+        console.log('📱 PWA Ready - Install on Android & iOS');
+        console.log('💫 Enhanced UI with Professional Dropdowns');
+    }
+
+    // Dropdown Synchronization Fix
+    setupDropdownSync() {
+        // Transaction Modal - Sync dropdown with type selection
+        const transactionType = document.getElementById('transactionType');
+        const transactionCategory = document.getElementById('transactionCategory');
+        
+        if (transactionType && transactionCategory) {
+            transactionType.addEventListener('change', () => {
+                this.updateCategoryOptions();
+                this.showToast('Categories updated based on transaction type', 'info');
+            });
+        }
+
+        // Recurring Modal - Sync dropdown with type selection
+        const recurringType = document.getElementById('recurringType');
+        const recurringCategory = document.getElementById('recurringCategory');
+        
+        if (recurringType && recurringCategory) {
+            recurringType.addEventListener('change', () => {
+                this.updateRecurringCategoryOptions();
+                this.showToast('Categories updated for recurring transaction', 'info');
+            });
+        }
     }
 
     // PWA and Installation Setup
@@ -89,6 +122,8 @@ class MRMApp {
     }
 
     showInstallBanner() {
+        if (localStorage.getItem('mrm_install_dismissed') === 'true') return;
+        
         const banner = document.getElementById('installBanner');
         banner.classList.remove('hidden');
         banner.style.animation = 'slideInFromTop 0.5s ease-out';
@@ -123,6 +158,7 @@ class MRMApp {
         if (outcome === 'accepted') {
             console.log('User accepted the install prompt');
             this.hideInstallBanner();
+            this.showToast('MRM ERP installed successfully! 🎉', 'success');
         }
         
         deferredPrompt = null;
@@ -184,6 +220,7 @@ class MRMApp {
             this.updateCurrencySymbols();
             this.updateDashboard();
             this.refreshCurrentTab();
+            this.showToast(`Currency changed to ${CURRENCY_CONFIG[this.currentCurrency].code} (${CURRENCY_CONFIG[this.currentCurrency].symbol})`, 'success');
         });
         
         this.updateCurrencySymbols();
@@ -202,6 +239,12 @@ class MRMApp {
             element.className = element.className.replace(/fa-\w+-sign/, 'fa-rupee-sign');
             if (this.currentCurrency === 'USD') {
                 element.className = element.className.replace('fa-rupee-sign', 'fa-dollar-sign');
+            } else if (this.currentCurrency === 'EUR') {
+                element.className = element.className.replace('fa-rupee-sign', 'fa-euro-sign');
+            } else if (this.currentCurrency === 'GBP') {
+                element.className = element.className.replace('fa-rupee-sign', 'fa-pound-sign');
+            } else if (this.currentCurrency === 'JPY') {
+                element.className = element.className.replace('fa-rupee-sign', 'fa-yen-sign');
             }
         });
     }
@@ -263,8 +306,16 @@ class MRMApp {
             }
         };
 
-        window.addEventListener('online', updateConnectionStatus);
-        window.addEventListener('offline', updateConnectionStatus);
+        window.addEventListener('online', () => {
+            updateConnectionStatus();
+            this.showToast('Connection restored! All features available.', 'success');
+        });
+        
+        window.addEventListener('offline', () => {
+            updateConnectionStatus();
+            this.showToast('Working offline. Data will sync when online.', 'warning');
+        });
+        
         updateConnectionStatus();
     }
 
@@ -291,10 +342,6 @@ class MRMApp {
                 this.closeModal(e.target.id);
             }
         });
-
-        // Transaction type change
-        document.getElementById('transactionType').addEventListener('change', this.updateCategoryOptions.bind(this));
-        document.getElementById('recurringType').addEventListener('change', this.updateRecurringCategoryOptions.bind(this));
 
         // Filter events
         const typeFilter = document.getElementById('typeFilter');
@@ -337,19 +384,22 @@ class MRMApp {
                 { id: 3, name: 'Freelancing', icon: 'fas fa-laptop-code', color: '#FF9800' },
                 { id: 4, name: 'Investment Returns', icon: 'fas fa-chart-line', color: '#9C27B0' },
                 { id: 5, name: 'Rental Income', icon: 'fas fa-home', color: '#607D8B' },
-                { id: 6, name: 'Other Income', icon: 'fas fa-plus-circle', color: '#795548' }
+                { id: 6, name: 'Dividends', icon: 'fas fa-percentage', color: '#795548' },
+                { id: 7, name: 'Other Income', icon: 'fas fa-plus-circle', color: '#607D8B' }
             ],
             expense: [
-                { id: 7, name: 'Food & Dining', icon: 'fas fa-utensils', color: '#F44336' },
-                { id: 8, name: 'Transportation', icon: 'fas fa-car', color: '#E91E63' },
-                { id: 9, name: 'Groceries', icon: 'fas fa-shopping-basket', color: '#9C27B0' },
-                { id: 10, name: 'Entertainment', icon: 'fas fa-gamepad', color: '#673AB7' },
-                { id: 11, name: 'Bills & Utilities', icon: 'fas fa-file-invoice', color: '#3F51B5' },
-                { id: 12, name: 'Healthcare', icon: 'fas fa-medkit', color: '#009688' },
-                { id: 13, name: 'Travel', icon: 'fas fa-plane', color: '#00BCD4' },
-                { id: 14, name: 'Education', icon: 'fas fa-graduation-cap', color: '#FF5722' },
-                { id: 15, name: 'Shopping', icon: 'fas fa-shopping-cart', color: '#607D8B' },
-                { id: 16, name: 'EMI/Loans', icon: 'fas fa-credit-card', color: '#795548' }
+                { id: 8, name: 'Food & Dining', icon: 'fas fa-utensils', color: '#F44336' },
+                { id: 9, name: 'Transportation', icon: 'fas fa-car', color: '#E91E63' },
+                { id: 10, name: 'Groceries', icon: 'fas fa-shopping-basket', color: '#9C27B0' },
+                { id: 11, name: 'Entertainment', icon: 'fas fa-gamepad', color: '#673AB7' },
+                { id: 12, name: 'Bills & Utilities', icon: 'fas fa-file-invoice', color: '#3F51B5' },
+                { id: 13, name: 'Healthcare', icon: 'fas fa-medkit', color: '#009688' },
+                { id: 14, name: 'Travel', icon: 'fas fa-plane', color: '#00BCD4' },
+                { id: 15, name: 'Education', icon: 'fas fa-graduation-cap', color: '#FF5722' },
+                { id: 16, name: 'Shopping', icon: 'fas fa-shopping-cart', color: '#607D8B' },
+                { id: 17, name: 'EMI/Loans', icon: 'fas fa-credit-card', color: '#795548' },
+                { id: 18, name: 'Insurance', icon: 'fas fa-shield-alt', color: '#607D8B' },
+                { id: 19, name: 'Taxes', icon: 'fas fa-receipt', color: '#795548' }
             ]
         };
     }
@@ -915,6 +965,7 @@ class MRMApp {
         }
 
         this.populateTransactionTable(filteredTransactions);
+        this.showToast(`Found ${filteredTransactions.length} transactions matching filters`, 'info');
     }
 
     applyMobileFilters() {
@@ -936,6 +987,7 @@ class MRMApp {
 
         this.populateTransactionTable(filteredTransactions);
         this.toggleAdvancedFilters(); // Close filters
+        this.showToast(`Filtered to ${filteredTransactions.length} transactions`, 'info');
     }
 
     clearMobileFilters() {
@@ -944,6 +996,7 @@ class MRMApp {
         document.getElementById('mobileCategoryFilter').value = 'all';
         this.populateTransactionTable();
         this.toggleAdvancedFilters();
+        this.showToast('Filters cleared', 'info');
     }
 
     resetFilters() {
@@ -957,7 +1010,12 @@ class MRMApp {
         if (typeFilter) typeFilter.value = 'all';
         if (categoryFilter) categoryFilter.value = 'all';
         
+        // Reset mobile filter tabs
+        document.querySelectorAll('.filter-tab').forEach(tab => tab.classList.remove('active'));
+        document.querySelector('.filter-tab[data-filter="all"]')?.classList.add('active');
+        
         this.populateTransactionTable();
+        this.showToast('All filters reset', 'info');
     }
 
     handleTransactionSubmit(e) {
@@ -977,8 +1035,10 @@ class MRMApp {
         if (this.currentEditId) {
             const index = this.transactions.findIndex(t => t.id === this.currentEditId);
             this.transactions[index] = transaction;
+            this.showToast('Transaction updated successfully!', 'success');
         } else {
             this.transactions.push(transaction);
+            this.showToast('Transaction added successfully!', 'success');
         }
 
         this.saveData();
@@ -990,9 +1050,6 @@ class MRMApp {
         }
 
         this.currentEditId = null;
-        
-        // Show success message
-        this.showToast('Transaction saved successfully!', 'success');
     }
 
     editTransaction(id) {
@@ -1005,11 +1062,17 @@ class MRMApp {
         document.getElementById('transactionType').value = transaction.type;
         document.getElementById('transactionAmount').value = transaction.amount;
         document.getElementById('transactionDescription').value = transaction.description;
-        document.getElementById('transactionCategory').value = transaction.categoryId;
         document.getElementById('transactionDate').value = transaction.date;
         document.getElementById('transactionNotes').value = transaction.notes || '';
 
+        // First update category options based on type, then set the category
         this.updateCategoryOptions();
+        
+        // Small delay to ensure options are populated
+        setTimeout(() => {
+            document.getElementById('transactionCategory').value = transaction.categoryId;
+        }, 50);
+
         this.openModal('transactionModal');
     }
 
@@ -1027,7 +1090,7 @@ class MRMApp {
         }
     }
 
-    // Budget Management (same as before but with currency formatting)
+    // Budget Management
     loadBudgets() {
         const container = document.getElementById('budgetsGrid');
         if (!container) return;
@@ -1099,7 +1162,7 @@ class MRMApp {
         e.preventDefault();
         
         const budget = {
-            id: Date.now(),
+            id: this.currentEditId || Date.now(),
             categoryId: parseInt(document.getElementById('budgetCategory').value),
             amount: parseFloat(document.getElementById('budgetAmount').value),
             period: document.getElementById('budgetPeriodType').value,
@@ -1108,16 +1171,38 @@ class MRMApp {
 
         // Check if budget already exists for this category
         const existingIndex = this.budgets.findIndex(b => b.categoryId === budget.categoryId);
-        if (existingIndex >= 0) {
-            this.budgets[existingIndex] = budget;
+        if (existingIndex >= 0 && !this.currentEditId) {
+            this.showToast('Budget already exists for this category. Please edit the existing one.', 'warning');
+            return;
+        }
+
+        if (this.currentEditId) {
+            const index = this.budgets.findIndex(b => b.id === this.currentEditId);
+            this.budgets[index] = budget;
+            this.showToast('Budget updated successfully!', 'success');
         } else {
             this.budgets.push(budget);
+            this.showToast('Budget created successfully!', 'success');
         }
 
         this.saveData();
         this.closeModal('budgetModal');
         this.loadBudgets();
-        this.showToast('Budget created successfully!', 'success');
+        this.currentEditId = null;
+    }
+
+    editBudget(id) {
+        const budget = this.budgets.find(b => b.id === id);
+        if (!budget) return;
+
+        this.currentEditId = id;
+        
+        document.querySelector('#budgetModal h2').innerHTML = '<i class="fas fa-edit"></i> Edit Budget';
+        document.getElementById('budgetCategory').value = budget.categoryId;
+        document.getElementById('budgetAmount').value = budget.amount;
+        document.getElementById('budgetPeriodType').value = budget.period;
+
+        this.openModal('budgetModal');
     }
 
     deleteBudget(id) {
@@ -1185,24 +1270,77 @@ class MRMApp {
         e.preventDefault();
         
         const category = {
-            id: Date.now(),
+            id: this.currentEditId || Date.now(),
             name: document.getElementById('categoryName').value,
             icon: document.getElementById('categoryIcon').value,
             color: document.getElementById('categoryColor').value
         };
 
         const type = document.getElementById('categoryType').value;
-        this.categories[type].push(category);
+
+        if (this.currentEditId) {
+            // Find and update existing category
+            let found = false;
+            ['income', 'expense'].forEach(t => {
+                const index = this.categories[t].findIndex(c => c.id === this.currentEditId);
+                if (index >= 0) {
+                    this.categories[t][index] = category;
+                    found = true;
+                }
+            });
+            if (!found) {
+                this.categories[type].push(category);
+            }
+            this.showToast('Category updated successfully!', 'success');
+        } else {
+            this.categories[type].push(category);
+            this.showToast('Category added successfully!', 'success');
+        }
 
         this.saveData();
         this.closeModal('categoryModal');
         this.loadCategories();
         this.populateCategorySelects();
-        this.showToast('Category added successfully!', 'success');
+        this.currentEditId = null;
+    }
+
+    editCategory(id) {
+        let category = null;
+        let categoryType = '';
+
+        // Find category in both income and expense arrays
+        category = this.categories.income.find(c => c.id === id);
+        if (category) {
+            categoryType = 'income';
+        } else {
+            category = this.categories.expense.find(c => c.id === id);
+            if (category) {
+                categoryType = 'expense';
+            }
+        }
+
+        if (!category) return;
+
+        this.currentEditId = id;
+        
+        document.querySelector('#categoryModal h2').innerHTML = '<i class="fas fa-edit"></i> Edit Category';
+        document.getElementById('categoryName').value = category.name;
+        document.getElementById('categoryType').value = categoryType;
+        document.getElementById('categoryIcon').value = category.icon;
+        document.getElementById('categoryColor').value = category.color;
+
+        this.openModal('categoryModal');
     }
 
     deleteCategory(id) {
-        if (confirm('Are you sure you want to delete this category? This will affect existing transactions.')) {
+        // Check if category is being used in transactions
+        const isUsed = this.transactions.some(t => t.categoryId === id);
+        
+        if (isUsed && !confirm('This category is being used in transactions. Deleting it will affect existing transactions. Continue?')) {
+            return;
+        }
+
+        if (confirm('Are you sure you want to delete this category?')) {
             this.categories.income = this.categories.income.filter(c => c.id !== id);
             this.categories.expense = this.categories.expense.filter(c => c.id !== id);
             this.saveData();
@@ -1248,6 +1386,9 @@ class MRMApp {
                     </div>
                 </div>
                 <div class="goal-actions">
+                    <button class="action-btn-small edit" onclick="app.editGoal(${goal.id})">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
                     <button class="action-btn-small delete" onclick="app.deleteGoal(${goal.id})">
                         <i class="fas fa-trash"></i> Delete
                     </button>
@@ -1303,19 +1444,42 @@ class MRMApp {
         e.preventDefault();
         
         const goal = {
-            id: Date.now(),
+            id: this.currentEditId || Date.now(),
             name: document.getElementById('goalName').value,
             type: document.getElementById('goalType').value,
             target: parseFloat(document.getElementById('goalTarget').value),
             deadline: document.getElementById('goalDeadline').value,
-            createdAt: new Date().toISOString()
+            createdAt: this.currentEditId ? this.goals.find(g => g.id === this.currentEditId).createdAt : new Date().toISOString()
         };
 
-        this.goals.push(goal);
+        if (this.currentEditId) {
+            const index = this.goals.findIndex(g => g.id === this.currentEditId);
+            this.goals[index] = goal;
+            this.showToast('Goal updated successfully!', 'success');
+        } else {
+            this.goals.push(goal);
+            this.showToast('Goal set successfully!', 'success');
+        }
+
         this.saveData();
         this.closeModal('goalModal');
         this.loadGoals();
-        this.showToast('Goal set successfully!', 'success');
+        this.currentEditId = null;
+    }
+
+    editGoal(id) {
+        const goal = this.goals.find(g => g.id === id);
+        if (!goal) return;
+
+        this.currentEditId = id;
+        
+        document.querySelector('#goalModal h2').innerHTML = '<i class="fas fa-edit"></i> Edit Financial Goal';
+        document.getElementById('goalName').value = goal.name;
+        document.getElementById('goalType').value = goal.type;
+        document.getElementById('goalTarget').value = goal.target;
+        document.getElementById('goalDeadline').value = goal.deadline;
+
+        this.openModal('goalModal');
     }
 
     deleteGoal(id) {
@@ -1356,6 +1520,9 @@ class MRMApp {
                     ${recurring.type === 'income' ? '+' : '-'}${this.formatCurrency(recurring.amount)}
                 </div>
                 <div class="recurring-actions">
+                    <button class="action-btn-small edit" onclick="app.editRecurring(${recurring.id})">
+                        <i class="fas fa-edit"></i>
+                    </button>
                     <button class="action-btn-small delete" onclick="app.deleteRecurring(${recurring.id})">
                         <i class="fas fa-trash"></i>
                     </button>
@@ -1369,22 +1536,53 @@ class MRMApp {
         e.preventDefault();
         
         const recurring = {
-            id: Date.now(),
+            id: this.currentEditId || Date.now(),
             type: document.getElementById('recurringType').value,
             amount: parseFloat(document.getElementById('recurringAmount').value),
             description: document.getElementById('recurringDescription').value,
             categoryId: parseInt(document.getElementById('recurringCategory').value),
             frequency: document.getElementById('recurringFrequency').value,
             startDate: document.getElementById('recurringStartDate').value,
-            lastProcessed: null,
-            createdAt: new Date().toISOString()
+            lastProcessed: this.currentEditId ? this.recurringTransactions.find(r => r.id === this.currentEditId).lastProcessed : null,
+            createdAt: this.currentEditId ? this.recurringTransactions.find(r => r.id === this.currentEditId).createdAt : new Date().toISOString()
         };
 
-        this.recurringTransactions.push(recurring);
+        if (this.currentEditId) {
+            const index = this.recurringTransactions.findIndex(r => r.id === this.currentEditId);
+            this.recurringTransactions[index] = recurring;
+            this.showToast('Recurring transaction updated successfully!', 'success');
+        } else {
+            this.recurringTransactions.push(recurring);
+            this.showToast('Recurring transaction added successfully!', 'success');
+        }
+
         this.saveData();
         this.closeModal('recurringModal');
         this.loadRecurring();
-        this.showToast('Recurring transaction added successfully!', 'success');
+        this.currentEditId = null;
+    }
+
+    editRecurring(id) {
+        const recurring = this.recurringTransactions.find(r => r.id === id);
+        if (!recurring) return;
+
+        this.currentEditId = id;
+        
+        document.querySelector('#recurringModal h2').innerHTML = '<i class="fas fa-edit"></i> Edit Recurring Transaction';
+        document.getElementById('recurringType').value = recurring.type;
+        document.getElementById('recurringAmount').value = recurring.amount;
+        document.getElementById('recurringDescription').value = recurring.description;
+        document.getElementById('recurringFrequency').value = recurring.frequency;
+        document.getElementById('recurringStartDate').value = recurring.startDate;
+
+        // Update category options based on type, then set the category
+        this.updateRecurringCategoryOptions();
+        
+        setTimeout(() => {
+            document.getElementById('recurringCategory').value = recurring.categoryId;
+        }, 50);
+
+        this.openModal('recurringModal');
     }
 
     deleteRecurring(id) {
@@ -1486,6 +1684,7 @@ class MRMApp {
                 default:
                     container.innerHTML = this.generateSummaryReport(reportPeriod);
             }
+            this.showToast(`${reportType.charAt(0).toUpperCase() + reportType.slice(1)} report generated!`, 'success');
         }, 500);
     }
 
@@ -1493,30 +1692,31 @@ class MRMApp {
         const stats = this.getReportStats(period);
         return `
             <div class="report-summary">
-                <h3>Financial Summary Report</h3>
+                <h3>📊 Financial Summary Report</h3>
                 <div class="summary-cards">
                     <div class="card">
-                        <h4>Total Income</h4>
+                        <h4>💰 Total Income</h4>
                         <div class="card-value income">${this.formatCurrency(stats.totalIncome)}</div>
                     </div>
                     <div class="card">
-                        <h4>Total Expenses</h4>
+                        <h4>💸 Total Expenses</h4>
                         <div class="card-value expense">${this.formatCurrency(stats.totalExpenses)}</div>
                     </div>
                     <div class="card">
-                        <h4>Net Profit/Loss</h4>
+                        <h4>💵 Net Profit/Loss</h4>
                         <div class="card-value ${stats.netBalance >= 0 ? 'income' : 'expense'}">${this.formatCurrency(stats.netBalance)}</div>
                     </div>
                     <div class="card">
-                        <h4>Savings Rate</h4>
+                        <h4>🏦 Savings Rate</h4>
                         <div class="card-value">${stats.savingsRate}%</div>
                     </div>
                 </div>
                 <div class="report-details">
-                    <p><strong>Report Period:</strong> ${this.getPeriodLabel(period)}</p>
-                    <p><strong>Total Transactions:</strong> ${stats.totalTransactions}</p>
-                    <p><strong>Average Income:</strong> ${this.formatCurrency(stats.avgIncome)}</p>
-                    <p><strong>Average Expense:</strong> ${this.formatCurrency(stats.avgExpense)}</p>
+                    <p><strong>📅 Report Period:</strong> ${this.getPeriodLabel(period)}</p>
+                    <p><strong>📝 Total Transactions:</strong> ${stats.totalTransactions}</p>
+                    <p><strong>📈 Average Income:</strong> ${this.formatCurrency(stats.avgIncome)}</p>
+                    <p><strong>📉 Average Expense:</strong> ${this.formatCurrency(stats.avgExpense)}</p>
+                    <p><strong>💱 Currency:</strong> ${CURRENCY_CONFIG[this.currentCurrency].code} (${CURRENCY_CONFIG[this.currentCurrency].symbol})</p>
                 </div>
             </div>
         `;
@@ -1528,12 +1728,12 @@ class MRMApp {
         
         return `
             <div class="report-income">
-                <h3>Income Analysis Report</h3>
+                <h3>💰 Income Analysis Report</h3>
                 <div class="report-total">
                     <h4>Total Income: <span class="income">${this.formatCurrency(total)}</span></h4>
                 </div>
                 <div class="transaction-list">
-                    ${transactions.map(t => {
+                    ${transactions.length > 0 ? transactions.map(t => {
                         const category = this.getCategoryById(t.categoryId);
                         return `
                             <div class="transaction-item">
@@ -1543,7 +1743,7 @@ class MRMApp {
                                 <span class="income">${this.formatCurrency(t.amount)}</span>
                             </div>
                         `;
-                    }).join('')}
+                    }).join('') : '<p class="text-center text-muted">No income transactions found for this period.</p>'}
                 </div>
             </div>
         `;
@@ -1555,12 +1755,12 @@ class MRMApp {
         
         return `
             <div class="report-expense">
-                <h3>Expense Analysis Report</h3>
+                <h3>💸 Expense Analysis Report</h3>
                 <div class="report-total">
                     <h4>Total Expenses: <span class="expense">${this.formatCurrency(total)}</span></h4>
                 </div>
                 <div class="transaction-list">
-                    ${transactions.map(t => {
+                    ${transactions.length > 0 ? transactions.map(t => {
                         const category = this.getCategoryById(t.categoryId);
                         return `
                             <div class="transaction-item">
@@ -1570,18 +1770,32 @@ class MRMApp {
                                 <span class="expense">${this.formatCurrency(t.amount)}</span>
                             </div>
                         `;
-                    }).join('')}
+                    }).join('') : '<p class="text-center text-muted">No expense transactions found for this period.</p>'}
                 </div>
             </div>
         `;
     }
 
     generateCashflowReport(period) {
+        const transactions = this.getTransactionsForPeriod(period);
+        const monthlyData = this.getMonthlyTrendData();
+        
         return `
             <div class="report-cashflow">
-                <h3>Cash Flow Report</h3>
+                <h3>💵 Cash Flow Report</h3>
                 <div class="cashflow-summary">
-                    <p>This report shows your cash flow trends over time for ${this.getPeriodLabel(period)}.</p>
+                    <p>This report shows your cash flow trends for <strong>${this.getPeriodLabel(period)}</strong>.</p>
+                    <div class="cashflow-stats">
+                        <div class="stat-item">
+                            <strong>📊 Total Transactions:</strong> ${transactions.length}
+                        </div>
+                        <div class="stat-item">
+                            <strong>💰 Income Transactions:</strong> ${transactions.filter(t => t.type === 'income').length}
+                        </div>
+                        <div class="stat-item">
+                            <strong>💸 Expense Transactions:</strong> ${transactions.filter(t => t.type === 'expense').length}
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -1596,7 +1810,7 @@ class MRMApp {
             const categoryName = category ? category.name : 'Unknown';
             
             if (!categoryData[categoryName]) {
-                categoryData[categoryName] = { income: 0, expense: 0 };
+                categoryData[categoryName] = { income: 0, expense: 0, icon: category ? category.icon : 'fas fa-circle' };
             }
             
             categoryData[categoryName][transaction.type] += transaction.amount;
@@ -1604,12 +1818,12 @@ class MRMApp {
 
         const categoryItems = Object.entries(categoryData).map(([name, data]) =>
             `<div class="category-report-item">
-                <h4>${name}</h4>
+                <h4><i class="${data.icon}"></i> ${name}</h4>
                 <div class="category-amounts">
-                    <span class="income">Income: ${this.formatCurrency(data.income)}</span>
-                    <span class="expense">Expenses: ${this.formatCurrency(data.expense)}</span>
+                    <span class="income">💰 Income: ${this.formatCurrency(data.income)}</span>
+                    <span class="expense">💸 Expenses: ${this.formatCurrency(data.expense)}</span>
                     <span class="net ${data.income - data.expense >= 0 ? 'income' : 'expense'}">
-                        Net: ${this.formatCurrency(data.income - data.expense)}
+                        💵 Net: ${this.formatCurrency(data.income - data.expense)}
                     </span>
                 </div>
             </div>`
@@ -1617,9 +1831,9 @@ class MRMApp {
 
         return `
             <div class="report-category">
-                <h3>Category Breakdown Report</h3>
+                <h3>📈 Category Breakdown Report</h3>
                 <div class="category-report-list">
-                    ${categoryItems}
+                    ${categoryItems || '<p class="text-center text-muted">No transactions found for this period.</p>'}
                 </div>
             </div>
         `;
@@ -1692,11 +1906,27 @@ class MRMApp {
         document.body.style.overflow = 'hidden';
 
         // Reset form if it's a new entry
-        if (!this.currentEditId && modalId === 'transactionModal') {
-            document.getElementById('transactionModalTitle').innerHTML = '<i class="fas fa-plus-circle"></i> Add Transaction';
-            document.getElementById('transactionForm').reset();
-            document.getElementById('transactionDate').value = new Date().toISOString().split('T')[0];
-            this.updateCategoryOptions();
+        if (!this.currentEditId) {
+            const form = modal.querySelector('form');
+            if (form) form.reset();
+
+            // Set default values for specific modals
+            if (modalId === 'transactionModal') {
+                document.getElementById('transactionModalTitle').innerHTML = '<i class="fas fa-plus-circle"></i> Add Transaction';
+                document.getElementById('transactionDate').value = new Date().toISOString().split('T')[0];
+                this.updateCategoryOptions();
+            } else if (modalId === 'budgetModal') {
+                document.querySelector('#budgetModal h2').innerHTML = '<i class="fas fa-chart-pie"></i> Create Budget';
+            } else if (modalId === 'categoryModal') {
+                document.querySelector('#categoryModal h2').innerHTML = '<i class="fas fa-tags"></i> Add Category';
+            } else if (modalId === 'goalModal') {
+                document.querySelector('#goalModal h2').innerHTML = '<i class="fas fa-bullseye"></i> Set Financial Goal';
+                document.getElementById('goalDeadline').value = new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0];
+            } else if (modalId === 'recurringModal') {
+                document.querySelector('#recurringModal h2').innerHTML = '<i class="fas fa-redo"></i> Add Recurring Transaction';
+                document.getElementById('recurringStartDate').value = new Date().toISOString().split('T')[0];
+                this.updateRecurringCategoryOptions();
+            }
         }
 
         // Update currency symbols in modal
@@ -1710,9 +1940,7 @@ class MRMApp {
         modal.classList.remove('active');
         document.body.style.overflow = '';
         
-        // Reset form and edit state
-        const form = modal.querySelector('form');
-        if (form) form.reset();
+        // Reset edit state
         this.currentEditId = null;
     }
 
@@ -1744,70 +1972,124 @@ class MRMApp {
             const select = document.getElementById(selectId);
             if (select) {
                 const currentValue = select.value;
-                select.innerHTML = '';
                 
-                // Add income categories
-                const incomeGroup = document.createElement('optgroup');
-                incomeGroup.label = 'Income Categories';
-                this.categories.income.forEach(category => {
-                    const option = document.createElement('option');
-                    option.value = category.id;
-                    option.textContent = category.name;
-                    incomeGroup.appendChild(option);
-                });
-                select.appendChild(incomeGroup);
+                // For budget categories, only show expense categories
+                if (selectId === 'budgetCategory') {
+                    select.innerHTML = '';
+                    this.categories.expense.forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category.id;
+                        option.textContent = `${category.name}`;
+                        select.appendChild(option);
+                    });
+                } else {
+                    // For transaction and recurring categories, show all with groups
+                    select.innerHTML = '';
+                    
+                    // Add income categories
+                    if (this.categories.income.length > 0) {
+                        const incomeGroup = document.createElement('optgroup');
+                        incomeGroup.label = '💰 Income Categories';
+                        this.categories.income.forEach(category => {
+                            const option = document.createElement('option');
+                            option.value = category.id;
+                            option.textContent = category.name;
+                            incomeGroup.appendChild(option);
+                        });
+                        select.appendChild(incomeGroup);
+                    }
 
-                // Add expense categories
-                const expenseGroup = document.createElement('optgroup');
-                expenseGroup.label = 'Expense Categories';
-                this.categories.expense.forEach(category => {
-                    const option = document.createElement('option');
-                    option.value = category.id;
-                    option.textContent = category.name;
-                    expenseGroup.appendChild(option);
-                });
-                select.appendChild(expenseGroup);
+                    // Add expense categories
+                    if (this.categories.expense.length > 0) {
+                        const expenseGroup = document.createElement('optgroup');
+                        expenseGroup.label = '💸 Expense Categories';
+                        this.categories.expense.forEach(category => {
+                            const option = document.createElement('option');
+                            option.value = category.id;
+                            option.textContent = category.name;
+                            expenseGroup.appendChild(option);
+                        });
+                        select.appendChild(expenseGroup);
+                    }
+                }
 
-                // Restore previous value
-                if (currentValue) {
+                // Restore previous value if valid
+                if (currentValue && [...this.categories.income, ...this.categories.expense].some(c => c.id == currentValue)) {
                     select.value = currentValue;
                 }
             }
         });
     }
 
+    // Enhanced dropdown synchronization methods
     updateCategoryOptions() {
-        const type = document.getElementById('transactionType').value;
+        const type = document.getElementById('transactionType')?.value;
         const categorySelect = document.getElementById('transactionCategory');
         
-        if (!categorySelect) return;
+        if (!categorySelect || !type) return;
 
+        const currentValue = categorySelect.value;
         categorySelect.innerHTML = '';
         
         const categories = type === 'income' ? this.categories.income : this.categories.expense;
-        categories.forEach(category => {
+        
+        if (categories.length === 0) {
             const option = document.createElement('option');
-            option.value = category.id;
-            option.textContent = category.name;
+            option.value = '';
+            option.textContent = `No ${type} categories available`;
+            option.disabled = true;
             categorySelect.appendChild(option);
-        });
+        } else {
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.id;
+                option.textContent = category.name;
+                categorySelect.appendChild(option);
+            });
+
+            // Try to restore previous value if it's valid for the new type
+            if (currentValue && categories.some(c => c.id == currentValue)) {
+                categorySelect.value = currentValue;
+            } else {
+                // Select first option if previous value is not valid
+                categorySelect.selectedIndex = 0;
+            }
+        }
     }
 
     updateRecurringCategoryOptions() {
-        const type = document.getElementById('recurringType').value;
+        const type = document.getElementById('recurringType')?.value;
         const categorySelect = document.getElementById('recurringCategory');
         
-        if (!categorySelect) return;
+        if (!categorySelect || !type) return;
 
+        const currentValue = categorySelect.value;
         categorySelect.innerHTML = '';
         
         const categories = type === 'income' ? this.categories.income : this.categories.expense;
-        categories.forEach(category => {
+        
+        if (categories.length === 0) {
             const option = document.createElement('option');
-            option.value = category.id;
-            option.textContent = category.name;
+            option.value = '';
+            option.textContent = `No ${type} categories available`;
+            option.disabled = true;
             categorySelect.appendChild(option);
-        });
+        } else {
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.id;
+                option.textContent = category.name;
+                categorySelect.appendChild(option);
+            });
+
+            // Try to restore previous value if it's valid for the new type
+            if (currentValue && categories.some(c => c.id == currentValue)) {
+                categorySelect.value = currentValue;
+            } else {
+                // Select first option if previous value is not valid
+                categorySelect.selectedIndex = 0;
+            }
+        }
     }
 
     setDefaultDates() {
@@ -1829,38 +2111,49 @@ class MRMApp {
 
     // Data Persistence
     saveData() {
-        localStorage.setItem('mrm_transactions', JSON.stringify(this.transactions));
-        localStorage.setItem('mrm_categories', JSON.stringify(this.categories));
-        localStorage.setItem('mrm_budgets', JSON.stringify(this.budgets));
-        localStorage.setItem('mrm_goals', JSON.stringify(this.goals));
-        localStorage.setItem('mrm_recurring', JSON.stringify(this.recurringTransactions));
-        localStorage.setItem('mrm_currency', this.currentCurrency);
+        try {
+            localStorage.setItem('mrm_transactions', JSON.stringify(this.transactions));
+            localStorage.setItem('mrm_categories', JSON.stringify(this.categories));
+            localStorage.setItem('mrm_budgets', JSON.stringify(this.budgets));
+            localStorage.setItem('mrm_goals', JSON.stringify(this.goals));
+            localStorage.setItem('mrm_recurring', JSON.stringify(this.recurringTransactions));
+            localStorage.setItem('mrm_currency', this.currentCurrency);
+            localStorage.setItem('mrm_last_backup', new Date().toISOString());
+        } catch (error) {
+            console.error('Error saving data:', error);
+            this.showToast('Error saving data. Storage may be full.', 'error');
+        }
     }
 
     // Import/Export Functions
     exportTransactions() {
-        const data = {
-            transactions: this.transactions,
-            categories: this.categories,
-            budgets: this.budgets,
-            goals: this.goals,
-            recurring: this.recurringTransactions,
-            currency: this.currentCurrency,
-            exportDate: new Date().toISOString(),
-            version: '19.3'
-        };
+        try {
+            const data = {
+                transactions: this.transactions,
+                categories: this.categories,
+                budgets: this.budgets,
+                goals: this.goals,
+                recurring: this.recurringTransactions,
+                currency: this.currentCurrency,
+                exportDate: new Date().toISOString(),
+                version: this.version
+            };
 
-        const dataStr = JSON.stringify(data, null, 2);
-        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
 
-        const exportFileDefaultName = `mrm-export-${new Date().toISOString().split('T')[0]}.json`;
+            const exportFileDefaultName = `mrm-export-${new Date().toISOString().split('T')[0]}.json`;
 
-        const linkElement = document.createElement('a');
-        linkElement.setAttribute('href', dataUri);
-        linkElement.setAttribute('download', exportFileDefaultName);
-        linkElement.click();
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
 
-        this.showToast('Data exported successfully!', 'success');
+            this.showToast('Data exported successfully!', 'success');
+        } catch (error) {
+            console.error('Export error:', error);
+            this.showToast('Error exporting data!', 'error');
+        }
     }
 
     importTransactions() {
@@ -1877,7 +2170,12 @@ class MRMApp {
                 try {
                     const data = JSON.parse(event.target.result);
                     
-                    if (confirm('This will replace all your current data. Are you sure?')) {
+                    // Validate data structure
+                    if (!data.version || !data.transactions) {
+                        throw new Error('Invalid file format');
+                    }
+                    
+                    if (confirm('This will replace all your current data. Are you sure?\n\nTip: Export your current data first as backup.')) {
                         if (data.transactions) this.transactions = data.transactions;
                         if (data.categories) this.categories = data.categories;
                         if (data.budgets) this.budgets = data.budgets;
@@ -1890,15 +2188,15 @@ class MRMApp {
                         this.populateCategorySelects();
                         this.updateCurrencySymbols();
                         
-                        this.showToast('Data imported successfully!', 'success');
+                        this.showToast(`Data imported successfully! (${data.version || 'Unknown version'})`, 'success');
                         
                         // Refresh current tab
                         const activeTab = document.querySelector('.tab-content.active').id;
                         this.switchTab(activeTab);
                     }
                 } catch (error) {
-                    this.showToast('Error importing data. Please check the file format.', 'error');
                     console.error('Import error:', error);
+                    this.showToast('Error importing data. Please check the file format.', 'error');
                 }
             };
             reader.readAsText(file);
@@ -1929,7 +2227,9 @@ class MRMApp {
         setTimeout(() => {
             toast.classList.remove('show');
             setTimeout(() => {
-                document.body.removeChild(toast);
+                if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
             }, 300);
         }, 3000);
     }
@@ -1945,20 +2245,26 @@ class MRMApp {
 
     // Backup and Restore
     createBackup() {
-        const backup = {
-            timestamp: new Date().toISOString(),
-            data: {
-                transactions: this.transactions,
-                categories: this.categories,
-                budgets: this.budgets,
-                goals: this.goals,
-                recurring: this.recurringTransactions,
-                currency: this.currentCurrency
-            }
-        };
-        
-        localStorage.setItem('mrm_backup', JSON.stringify(backup));
-        return backup;
+        try {
+            const backup = {
+                timestamp: new Date().toISOString(),
+                version: this.version,
+                data: {
+                    transactions: this.transactions,
+                    categories: this.categories,
+                    budgets: this.budgets,
+                    goals: this.goals,
+                    recurring: this.recurringTransactions,
+                    currency: this.currentCurrency
+                }
+            };
+            
+            localStorage.setItem('mrm_backup', JSON.stringify(backup));
+            return backup;
+        } catch (error) {
+            console.error('Backup error:', error);
+            return null;
+        }
     }
 
     restoreBackup() {
@@ -1971,7 +2277,7 @@ class MRMApp {
         try {
             const backupData = JSON.parse(backup);
             
-            if (confirm(`Restore backup from ${new Date(backupData.timestamp).toLocaleString()}? This will replace all current data.`)) {
+            if (confirm(`Restore backup from ${new Date(backupData.timestamp).toLocaleString()}?\n\nThis will replace all current data.`)) {
                 this.transactions = backupData.data.transactions || [];
                 this.categories = backupData.data.categories || this.getDefaultCategories();
                 this.budgets = backupData.data.budgets || [];
@@ -1984,7 +2290,7 @@ class MRMApp {
                 this.populateCategorySelects();
                 this.updateCurrencySymbols();
                 
-                this.showToast('Backup restored successfully!', 'success');
+                this.showToast(`Backup restored successfully! (${backupData.version || 'Unknown version'})`, 'success');
                 
                 // Refresh current tab
                 const activeTab = document.querySelector('.tab-content.active').id;
@@ -1993,8 +2299,8 @@ class MRMApp {
                 return true;
             }
         } catch (error) {
-            this.showToast('Error restoring backup!', 'error');
             console.error('Restore error:', error);
+            this.showToast('Error restoring backup!', 'error');
             return false;
         }
         
@@ -2012,17 +2318,25 @@ function openTransactionModal(type) {
 }
 
 function openBudgetModal() {
-    // Populate with expense categories only
+    // Populate with expense categories only since budgets are for tracking expenses
     const budgetCategorySelect = document.getElementById('budgetCategory');
     if (budgetCategorySelect) {
         budgetCategorySelect.innerHTML = '';
         
-        app.categories.expense.forEach(category => {
+        if (app.categories.expense.length === 0) {
             const option = document.createElement('option');
-            option.value = category.id;
-            option.textContent = category.name;
+            option.value = '';
+            option.textContent = 'No expense categories available';
+            option.disabled = true;
             budgetCategorySelect.appendChild(option);
-        });
+        } else {
+            app.categories.expense.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.id;
+                option.textContent = category.name;
+                budgetCategorySelect.appendChild(option);
+            });
+        }
     }
     
     app.openModal('budgetModal');
@@ -2120,11 +2434,12 @@ document.addEventListener('DOMContentLoaded', function() {
         app.processRecurringTransactions();
     }, 86400000);
 
-    console.log('🇮🇳 MRM ERP v19.3 - World\'s Most Powerful Expense & Income Management Tool');
-    console.log('💰 Now with Indian Rupee (₹) Support!');
+    console.log('🚀 MRM ERP v19.5 Pro - Monthly Recurring Manager');
+    console.log('🇮🇳 Indian Currency (₹) Support Enabled');
     console.log('📱 PWA Ready - Install on Android & iOS');
     console.log('🔧 Developed by Anas Lila - ANAS LILA SOFTWARE');
     console.log('📅 Last Updated: August 14, 2025');
+    console.log('🐛 Bug Fixes: Dropdown synchronization enhanced');
 });
 
 // Handle page visibility change to process recurring transactions when user returns
@@ -2142,7 +2457,7 @@ window.addEventListener('beforeunload', function() {
     }
 });
 
-// Keyboard shortcuts
+// Enhanced Keyboard shortcuts
 document.addEventListener('keydown', function(e) {
     if (!app) return;
 
@@ -2168,6 +2483,24 @@ document.addEventListener('keydown', function(e) {
     if (e.altKey && e.key === 'g') {
         e.preventDefault();
         openGoalModal();
+    }
+
+    // Alt + R for Recurring Transaction
+    if (e.altKey && e.key === 'r') {
+        e.preventDefault();
+        openRecurringModal();
+    }
+
+    // Ctrl + E for Export
+    if (e.ctrlKey && e.key === 'e') {
+        e.preventDefault();
+        exportTransactions();
+    }
+
+    // Ctrl + I for Import
+    if (e.ctrlKey && e.key === 'i') {
+        e.preventDefault();
+        importTransactions();
     }
     
     // Escape to close modals
@@ -2198,5 +2531,545 @@ if ('serviceWorker' in navigator) {
 // Handle app installed event
 window.addEventListener('appinstalled', function(e) {
     console.log('🎉 MRM ERP has been installed!');
-    app.showToast('MRM ERP installed successfully! 🎉', 'success');
+    if (app) {
+        app.showToast('MRM ERP installed successfully! 🎉', 'success');
+    }
+});
+
+// Enhanced error handling
+window.addEventListener('error', function(e) {
+    console.error('Global error:', e.error);
+    if (app) {
+        app.showToast('An unexpected error occurred. Please refresh the page.', 'error');
+    }
+});
+
+window.addEventListener('unhandledrejection', function(e) {
+    console.error('Unhandled promise rejection:', e.reason);
+    if (app) {
+        app.showToast('A network or processing error occurred.', 'warning');
+    }
+});
+
+// Performance monitoring
+if (window.performance && window.performance.mark) {
+    window.addEventListener('load', function() {
+        window.performance.mark('app-loaded');
+        console.log('📊 App loaded successfully');
+    });
+}
+
+// Online/Offline event handlers
+window.addEventListener('online', function() {
+    console.log('🌐 Connection restored');
+});
+
+window.addEventListener('offline', function() {
+    console.log('📴 Connection lost - Working offline');
+});
+
+// Touch gesture support for mobile
+let startX, startY, distX, distY;
+
+document.addEventListener('touchstart', function(e) {
+    const touch = e.touches[0];
+    startX = touch.clientX;
+    startY = touch.clientY;
+}, { passive: true });
+
+document.addEventListener('touchmove', function(e) {
+    if (!startX || !startY) return;
+    
+    const touch = e.touches[0];
+    distX = touch.clientX - startX;
+    distY = touch.clientY - startY;
+}, { passive: true });
+
+document.addEventListener('touchend', function(e) {
+    if (!distX || !distY) return;
+    
+    // Swipe left/right for tab navigation (mobile only)
+    if (Math.abs(distX) > Math.abs(distY) && Math.abs(distX) > 50 && app && app.isMobile) {
+        const activeTab = document.querySelector('.tab-content.active').id;
+        const tabs = ['dashboard', 'transactions', 'budgets', 'categories', 'reports', 'goals', 'recurring', 'about'];
+        const currentIndex = tabs.indexOf(activeTab);
+        
+        if (distX > 0 && currentIndex > 0) {
+            // Swipe right - previous tab
+            app.switchTab(tabs[currentIndex - 1]);
+        } else if (distX < 0 && currentIndex < tabs.length - 1) {
+            // Swipe left - next tab
+            app.switchTab(tabs[currentIndex + 1]);
+        }
+    }
+    
+    // Reset values
+    startX = startY = distX = distY = null;
+}, { passive: true });
+
+// Enhanced local storage management
+const StorageManager = {
+    // Check storage availability
+    isAvailable() {
+        try {
+            const test = '__storage_test__';
+            localStorage.setItem(test, test);
+            localStorage.removeItem(test);
+            return true;
+        } catch(e) {
+            return false;
+        }
+    },
+    
+    // Get storage usage
+    getUsage() {
+        if (!this.isAvailable()) return { used: 0, available: 0, percentage: 0 };
+        
+        let used = 0;
+        for (let key in localStorage) {
+            if (localStorage.hasOwnProperty(key)) {
+                used += localStorage[key].length + key.length;
+            }
+        }
+        
+        // Estimate available storage (5MB typical limit)
+        const available = 5 * 1024 * 1024; // 5MB in bytes
+        const percentage = (used / available) * 100;
+        
+        return { used, available, percentage };
+    },
+    
+    // Clean old data
+    cleanup() {
+        const keysToRemove = [];
+        for (let key in localStorage) {
+            if (key.startsWith('mrm_backup_') && localStorage.hasOwnProperty(key)) {
+                try {
+                    const data = JSON.parse(localStorage[key]);
+                    const backupDate = new Date(data.timestamp);
+                    const daysDiff = (new Date() - backupDate) / (1000 * 60 * 60 * 24);
+                    
+                    // Remove backups older than 30 days
+                    if (daysDiff > 30) {
+                        keysToRemove.push(key);
+                    }
+                } catch(e) {
+                    keysToRemove.push(key);
+                }
+            }
+        }
+        
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+        return keysToRemove.length;
+    }
+};
+
+// Data validation utilities
+const DataValidator = {
+    // Validate transaction data
+    validateTransaction(transaction) {
+        const errors = [];
+        
+        if (!transaction.type || !['income', 'expense'].includes(transaction.type)) {
+            errors.push('Invalid transaction type');
+        }
+        
+        if (!transaction.amount || transaction.amount <= 0) {
+            errors.push('Amount must be greater than 0');
+        }
+        
+        if (!transaction.description || transaction.description.trim().length === 0) {
+            errors.push('Description is required');
+        }
+        
+        if (!transaction.categoryId) {
+            errors.push('Category is required');
+        }
+        
+        if (!transaction.date) {
+            errors.push('Date is required');
+        }
+        
+        return errors;
+    },
+    
+    // Validate budget data
+    validateBudget(budget) {
+        const errors = [];
+        
+        if (!budget.categoryId) {
+            errors.push('Category is required');
+        }
+        
+        if (!budget.amount || budget.amount <= 0) {
+            errors.push('Budget amount must be greater than 0');
+        }
+        
+        if (!budget.period || !['monthly', 'yearly'].includes(budget.period)) {
+            errors.push('Invalid budget period');
+        }
+        
+        return errors;
+    },
+    
+    // Validate goal data
+    validateGoal(goal) {
+        const errors = [];
+        
+        if (!goal.name || goal.name.trim().length === 0) {
+            errors.push('Goal name is required');
+        }
+        
+        if (!goal.type || !['savings', 'expense_reduction', 'income_increase'].includes(goal.type)) {
+            errors.push('Invalid goal type');
+        }
+        
+        if (!goal.target || goal.target <= 0) {
+            errors.push('Target amount must be greater than 0');
+        }
+        
+        if (!goal.deadline) {
+            errors.push('Target date is required');
+        } else {
+            const deadlineDate = new Date(goal.deadline);
+            const today = new Date();
+            if (deadlineDate <= today) {
+                errors.push('Target date must be in the future');
+            }
+        }
+        
+        return errors;
+    }
+};
+
+// Analytics and insights
+const Analytics = {
+    // Calculate spending trends
+    getSpendingTrends(transactions, months = 6) {
+        const trends = {};
+        const currentDate = new Date();
+        
+        for (let i = 0; i < months; i++) {
+            const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+            const monthKey = date.toISOString().slice(0, 7); // YYYY-MM format
+            
+            const monthTransactions = transactions.filter(t => {
+                return t.date.startsWith(monthKey) && t.type === 'expense';
+            });
+            
+            trends[monthKey] = monthTransactions.reduce((sum, t) => sum + t.amount, 0);
+        }
+        
+        return trends;
+    },
+    
+    // Get top spending categories
+    getTopCategories(transactions, app, limit = 5) {
+        const categoryTotals = {};
+        
+        transactions.filter(t => t.type === 'expense').forEach(transaction => {
+            const category = app.getCategoryById(transaction.categoryId);
+            const categoryName = category ? category.name : 'Unknown';
+            
+            if (!categoryTotals[categoryName]) {
+                categoryTotals[categoryName] = 0;
+            }
+            categoryTotals[categoryName] += transaction.amount;
+        });
+        
+        return Object.entries(categoryTotals)
+            .sort(([,a], [,b]) => b - a)
+            .slice(0, limit)
+            .map(([name, amount]) => ({ name, amount }));
+    },
+    
+    // Calculate financial health score
+    getFinancialHealthScore(stats) {
+        let score = 0;
+        let maxScore = 100;
+        
+        // Savings rate (40 points)
+        if (stats.savingsRate >= 20) score += 40;
+        else if (stats.savingsRate >= 10) score += 30;
+        else if (stats.savingsRate >= 5) score += 20;
+        else if (stats.savingsRate > 0) score += 10;
+        
+        // Income vs Expenses (30 points)
+        if (stats.netBalance > 0) score += 30;
+        else if (stats.netBalance >= -stats.totalIncome * 0.1) score += 15;
+        
+        // Consistency (30 points) - placeholder for future implementation
+        score += 20; // Base consistency score
+        
+        return Math.round((score / maxScore) * 100);
+    }
+};
+
+// Budget recommendations
+const BudgetRecommendations = {
+    // Suggest budget amounts based on spending patterns
+    suggestBudgetAmount(categoryId, transactions) {
+        const categoryTransactions = transactions.filter(t => 
+            t.categoryId === categoryId && t.type === 'expense'
+        );
+        
+        if (categoryTransactions.length === 0) return null;
+        
+        // Calculate average monthly spending for the category
+        const monthlySpending = {};
+        categoryTransactions.forEach(t => {
+            const monthKey = t.date.slice(0, 7);
+            if (!monthlySpending[monthKey]) {
+                monthlySpending[monthKey] = 0;
+            }
+            monthlySpending[monthKey] += t.amount;
+        });
+        
+        const amounts = Object.values(monthlySpending);
+        const averageSpending = amounts.reduce((sum, amount) => sum + amount, 0) / amounts.length;
+        
+        // Suggest 10% buffer above average
+        return Math.round(averageSpending * 1.1);
+    },
+    
+    // Get budget alerts
+    getBudgetAlerts(budgets, app) {
+        const alerts = [];
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
+        
+        budgets.forEach(budget => {
+            const spent = app.calculateBudgetSpent(budget);
+            const percentage = budget.amount > 0 ? (spent / budget.amount) * 100 : 0;
+            const category = app.getCategoryById(budget.categoryId);
+            
+            if (percentage >= 100) {
+                alerts.push({
+                    type: 'danger',
+                    message: `Budget exceeded for ${category ? category.name : 'Unknown'}`,
+                    percentage: percentage
+                });
+            } else if (percentage >= 80) {
+                alerts.push({
+                    type: 'warning',
+                    message: `Budget almost reached for ${category ? category.name : 'Unknown'}`,
+                    percentage: percentage
+                });
+            }
+        });
+        
+        return alerts;
+    }
+};
+
+// Export utilities for external use
+window.MRMUtils = {
+    StorageManager,
+    DataValidator,
+    Analytics,
+    BudgetRecommendations,
+    CURRENCY_CONFIG
+};
+
+// Theme management (for future dark/light mode toggle)
+const ThemeManager = {
+    getCurrentTheme() {
+        return localStorage.getItem('mrm_theme') || 'dark';
+    },
+    
+    setTheme(theme) {
+        localStorage.setItem('mrm_theme', theme);
+        document.documentElement.setAttribute('data-theme', theme);
+    },
+    
+    toggleTheme() {
+        const currentTheme = this.getCurrentTheme();
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        this.setTheme(newTheme);
+        return newTheme;
+    }
+};
+
+// Initialize theme
+document.addEventListener('DOMContentLoaded', function() {
+    const theme = ThemeManager.getCurrentTheme();
+    document.documentElement.setAttribute('data-theme', theme);
+});
+
+// Accessibility enhancements
+const AccessibilityManager = {
+    // Announce important changes to screen readers
+    announce(message) {
+        const announcement = document.createElement('div');
+        announcement.setAttribute('aria-live', 'polite');
+        announcement.setAttribute('aria-atomic', 'true');
+        announcement.style.position = 'absolute';
+        announcement.style.left = '-10000px';
+        announcement.style.width = '1px';
+        announcement.style.height = '1px';
+        announcement.style.overflow = 'hidden';
+        announcement.textContent = message;
+        
+        document.body.appendChild(announcement);
+        
+        setTimeout(() => {
+            document.body.removeChild(announcement);
+        }, 1000);
+    },
+    
+    // Enhanced keyboard navigation
+    setupKeyboardNavigation() {
+        // Tab management with keyboard
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey) {
+                switch(e.key) {
+                    case '1':
+                        e.preventDefault();
+                        if (app) app.switchTab('dashboard');
+                        break;
+                    case '2':
+                        e.preventDefault();
+                        if (app) app.switchTab('transactions');
+                        break;
+                    case '3':
+                        e.preventDefault();
+                        if (app) app.switchTab('budgets');
+                        break;
+                    case '4':
+                        e.preventDefault();
+                        if (app) app.switchTab('categories');
+                        break;
+                    case '5':
+                        e.preventDefault();
+                        if (app) app.switchTab('reports');
+                        break;
+                    case '6':
+                        e.preventDefault();
+                        if (app) app.switchTab('goals');
+                        break;
+                    case '7':
+                        e.preventDefault();
+                        if (app) app.switchTab('recurring');
+                        break;
+                    case '8':
+                        e.preventDefault();
+                        if (app) app.switchTab('about');
+                        break;
+                }
+            }
+        });
+    }
+};
+
+// Initialize accessibility features
+document.addEventListener('DOMContentLoaded', function() {
+    AccessibilityManager.setupKeyboardNavigation();
+});
+
+// Performance optimization
+const PerformanceOptimizer = {
+    // Debounce function for search and filter inputs
+    debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    },
+    
+    // Throttle function for scroll events
+    throttle(func, limit) {
+        let inThrottle;
+        return function() {
+            const args = arguments;
+            const context = this;
+            if (!inThrottle) {
+                func.apply(context, args);
+                inThrottle = true;
+                setTimeout(() => inThrottle = false, limit);
+            }
+        };
+    },
+    
+    // Lazy load images
+    setupLazyLoading() {
+        if ('IntersectionObserver' in window) {
+            const imageObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        img.src = img.dataset.src;
+                        img.classList.remove('lazy');
+                        imageObserver.unobserve(img);
+                    }
+                });
+            });
+            
+            document.querySelectorAll('img[data-src]').forEach(img => {
+                imageObserver.observe(img);
+            });
+        }
+    }
+};
+
+// Security utilities
+const SecurityManager = {
+    // Sanitize HTML input
+    sanitizeHTML(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    },
+    
+    // Validate file uploads
+    validateFileUpload(file) {
+        const allowedTypes = ['application/json'];
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        
+        if (!allowedTypes.includes(file.type)) {
+            return { valid: false, error: 'Invalid file type. Only JSON files are allowed.' };
+        }
+        
+        if (file.size > maxSize) {
+            return { valid: false, error: 'File size too large. Maximum 10MB allowed.' };
+        }
+        
+        return { valid: true };
+    },
+    
+    // Generate secure random ID
+    generateSecureId() {
+        return Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    }
+};
+
+// Final initialization and cleanup
+document.addEventListener('DOMContentLoaded', function() {
+    // Clean up old storage data
+    StorageManager.cleanup();
+    
+    // Setup performance optimizations
+    PerformanceOptimizer.setupLazyLoading();
+    
+    // Log storage usage
+    const usage = StorageManager.getUsage();
+    console.log(`💾 Storage Usage: ${(usage.percentage).toFixed(1)}% (${(usage.used/1024).toFixed(1)}KB used)`);
+    
+    // Final success message
+    console.log('✅ MRM ERP v19.5 Pro fully initialized and ready!');
+    console.log('🔧 Enhanced with dropdown sync fixes and professional styling');
+    console.log('🎯 All features operational - Enjoy managing your finances!');
+});
+
+// Clean up function for app termination
+window.addEventListener('beforeunload', function() {
+    // Final data save
+    if (app) {
+        app.saveData();
+        console.log('💾 Final data save completed');
+    }
 });
