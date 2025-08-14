@@ -2,14 +2,90 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>MRM ERP - Monthly Recurring Manager</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4a9eff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MRM ERP">
+    
+    <!-- Icons -->
     <link rel="icon" type="image/png" href="https://i.postimg.cc/J0Jw1hMT/image.png">
+    <link rel="apple-touch-icon" href="https://i.postimg.cc/J0Jw1hMT/image.png">
+    
+    <!-- Fonts and External Resources -->
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Styles -->
     <link rel="stylesheet" href="styles.css">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="script.js" as="script">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js" as="script">
 </head>
 <body>
+    <!-- PWA Install Banner -->
+    <div id="installBanner" class="install-banner hidden">
+        <div class="install-content">
+            <div class="install-icon">
+                <img src="https://i.postimg.cc/J0Jw1hMT/image.png" alt="MRM Logo">
+            </div>
+            <div class="install-text">
+                <h3>Install MRM ERP</h3>
+                <p>Add to your home screen for quick access</p>
+            </div>
+            <div class="install-actions">
+                <button id="installBtn" class="install-accept">
+                    <i class="fas fa-download"></i> Install
+                </button>
+                <button id="dismissInstall" class="install-dismiss">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- iOS Safari Install Prompt -->
+    <div id="iosInstallPrompt" class="ios-install-prompt hidden">
+        <div class="ios-prompt-content">
+            <div class="ios-prompt-header">
+                <img src="https://i.postimg.cc/J0Jw1hMT/image.png" alt="MRM Logo">
+                <h3>Install MRM ERP</h3>
+                <button id="closeIosPrompt" class="ios-close">×</button>
+            </div>
+            <div class="ios-prompt-body">
+                <p>Install this app on your iPhone:</p>
+                <div class="ios-instructions">
+                    <div class="ios-step">
+                        <i class="fas fa-share"></i>
+                        <span>Tap the Share button</span>
+                    </div>
+                    <div class="ios-step">
+                        <i class="fas fa-plus-square"></i>
+                        <span>Then "Add to Home Screen"</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Currency Selector -->
+    <div id="currencySelector" class="currency-selector">
+        <select id="currencySelect">
+            <option value="INR">₹ INR</option>
+            <option value="USD">$ USD</option>
+            <option value="EUR">€ EUR</option>
+            <option value="GBP">£ GBP</option>
+            <option value="JPY">¥ JPY</option>
+            <option value="CAD">C$ CAD</option>
+            <option value="AUD">A$ AUD</option>
+        </select>
+    </div>
+
     <!-- Header -->
     <header class="header">
         <div class="container">
@@ -17,41 +93,104 @@
                 <img src="https://i.postimg.cc/J0Jw1hMT/image.png" alt="MRM Logo" class="logo-img">
                 <span class="logo-text">MRM ERP</span>
             </div>
-            <nav class="nav">
+            
+            <!-- Mobile Menu Toggle -->
+            <button class="mobile-menu-toggle" id="mobileMenuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <!-- Desktop Navigation -->
+            <nav class="nav desktop-nav">
                 <button class="nav-btn active" data-tab="dashboard">
-                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                    <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
                 </button>
                 <button class="nav-btn" data-tab="transactions">
-                    <i class="fas fa-exchange-alt"></i> Transactions
+                    <i class="fas fa-exchange-alt"></i> <span>Transactions</span>
                 </button>
                 <button class="nav-btn" data-tab="budgets">
-                    <i class="fas fa-chart-pie"></i> Budgets
+                    <i class="fas fa-chart-pie"></i> <span>Budgets</span>
                 </button>
                 <button class="nav-btn" data-tab="categories">
-                    <i class="fas fa-tags"></i> Categories
+                    <i class="fas fa-tags"></i> <span>Categories</span>
                 </button>
                 <button class="nav-btn" data-tab="reports">
-                    <i class="fas fa-chart-line"></i> Reports
+                    <i class="fas fa-chart-line"></i> <span>Reports</span>
                 </button>
                 <button class="nav-btn" data-tab="goals">
-                    <i class="fas fa-bullseye"></i> Goals
+                    <i class="fas fa-bullseye"></i> <span>Goals</span>
                 </button>
                 <button class="nav-btn" data-tab="recurring">
-                    <i class="fas fa-redo"></i> Recurring
+                    <i class="fas fa-redo"></i> <span>Recurring</span>
                 </button>
                 <button class="nav-btn" data-tab="about">
-                    <i class="fas fa-info-circle"></i> About
+                    <i class="fas fa-info-circle"></i> <span>About</span>
                 </button>
             </nav>
         </div>
     </header>
+
+    <!-- Mobile Navigation -->
+    <div class="mobile-nav-container" id="mobileNavContainer">
+        <!-- Top Tab Row (4 tabs) -->
+        <div class="mobile-nav-row top-nav">
+            <button class="mobile-nav-btn active" data-tab="dashboard">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </button>
+            <button class="mobile-nav-btn" data-tab="transactions">
+                <i class="fas fa-exchange-alt"></i>
+                <span>Transactions</span>
+            </button>
+            <button class="mobile-nav-btn" data-tab="budgets">
+                <i class="fas fa-chart-pie"></i>
+                <span>Budgets</span>
+            </button>
+            <button class="mobile-nav-btn" data-tab="categories">
+                <i class="fas fa-tags"></i>
+                <span>Categories</span>
+            </button>
+        </div>
+        
+        <!-- Bottom Tab Row (4 tabs) -->
+        <div class="mobile-nav-row bottom-nav">
+            <button class="mobile-nav-btn" data-tab="reports">
+                <i class="fas fa-chart-line"></i>
+                <span>Reports</span>
+            </button>
+            <button class="mobile-nav-btn" data-tab="goals">
+                <i class="fas fa-bullseye"></i>
+                <span>Goals</span>
+            </button>
+            <button class="mobile-nav-btn" data-tab="recurring">
+                <i class="fas fa-redo"></i>
+                <span>Recurring</span>
+            </button>
+            <button class="mobile-nav-btn" data-tab="about">
+                <i class="fas fa-info-circle"></i>
+                <span>About</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Connection Status -->
+    <div id="connectionStatus" class="connection-status hidden">
+        <i class="fas fa-wifi-slash"></i>
+        <span>Working Offline</span>
+    </div>
 
     <!-- Main Content -->
     <main class="main">
         <!-- Dashboard Tab -->
         <section id="dashboard" class="tab-content active">
             <div class="container">
-                <h1><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+                <div class="page-header">
+                    <h1><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+                    <div class="page-actions">
+                        <button class="quick-add-btn" onclick="openQuickAddMenu()">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
                 
                 <!-- Summary Cards -->
                 <div class="summary-cards">
@@ -60,7 +199,7 @@
                             <i class="fas fa-arrow-up"></i>
                             <h3>Total Income</h3>
                         </div>
-                        <div class="card-value income" id="totalIncome">$0.00</div>
+                        <div class="card-value income" id="totalIncome">₹0.00</div>
                         <div class="card-change">
                             <span class="change-indicator" id="incomeChange">+0%</span>
                             <span>vs last month</span>
@@ -72,7 +211,7 @@
                             <i class="fas fa-arrow-down"></i>
                             <h3>Total Expenses</h3>
                         </div>
-                        <div class="card-value expense" id="totalExpenses">$0.00</div>
+                        <div class="card-value expense" id="totalExpenses">₹0.00</div>
                         <div class="card-change">
                             <span class="change-indicator" id="expenseChange">+0%</span>
                             <span>vs last month</span>
@@ -84,7 +223,7 @@
                             <i class="fas fa-wallet"></i>
                             <h3>Net Balance</h3>
                         </div>
-                        <div class="card-value" id="netBalance">$0.00</div>
+                        <div class="card-value" id="netBalance">₹0.00</div>
                         <div class="card-change">
                             <span class="change-indicator" id="balanceChange">+0%</span>
                             <span>vs last month</span>
@@ -104,8 +243,30 @@
                     </div>
                 </div>
 
-                <!-- Quick Actions -->
-                <div class="quick-actions">
+                <!-- Quick Actions for Mobile -->
+                <div class="mobile-quick-actions">
+                    <div class="quick-action-grid">
+                        <button class="quick-action-btn income-btn" onclick="openTransactionModal('income')">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>Add Income</span>
+                        </button>
+                        <button class="quick-action-btn expense-btn" onclick="openTransactionModal('expense')">
+                            <i class="fas fa-minus-circle"></i>
+                            <span>Add Expense</span>
+                        </button>
+                        <button class="quick-action-btn" onclick="openBudgetModal()">
+                            <i class="fas fa-chart-pie"></i>
+                            <span>Budget</span>
+                        </button>
+                        <button class="quick-action-btn" onclick="openGoalModal()">
+                            <i class="fas fa-bullseye"></i>
+                            <span>Goal</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Desktop Quick Actions -->
+                <div class="quick-actions desktop-only">
                     <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
                     <div class="action-buttons">
                         <button class="action-btn income-btn" onclick="openTransactionModal('income')">
@@ -125,21 +286,40 @@
 
                 <!-- Recent Transactions -->
                 <div class="recent-transactions">
-                    <h2><i class="fas fa-history"></i> Recent Transactions</h2>
-                    <div class="transaction-list" id="recentTransactionsList">
+                    <div class="section-header">
+                        <h2><i class="fas fa-history"></i> Recent Transactions</h2>
+                        <button class="view-all-btn" onclick="app.switchTab('transactions')">
+                            View All <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                    <div class="transaction-list mobile-optimized" id="recentTransactionsList">
                         <!-- Populated by JavaScript -->
                     </div>
                 </div>
 
-                <!-- Charts -->
+                <!-- Charts - Responsive -->
                 <div class="charts-container">
                     <div class="chart-card">
-                        <h3><i class="fas fa-chart-line"></i> Monthly Trend</h3>
-                        <canvas id="monthlyTrendChart"></canvas>
+                        <div class="chart-header">
+                            <h3><i class="fas fa-chart-line"></i> Monthly Trend</h3>
+                            <button class="chart-toggle" onclick="toggleChart('monthlyTrend')">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas id="monthlyTrendChart"></canvas>
+                        </div>
                     </div>
                     <div class="chart-card">
-                        <h3><i class="fas fa-chart-pie"></i> Expense Categories</h3>
-                        <canvas id="categoryChart"></canvas>
+                        <div class="chart-header">
+                            <h3><i class="fas fa-chart-pie"></i> Expense Categories</h3>
+                            <button class="chart-toggle" onclick="toggleChart('category')">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -148,10 +328,29 @@
         <!-- Transactions Tab -->
         <section id="transactions" class="tab-content">
             <div class="container">
-                <h1><i class="fas fa-exchange-alt"></i> Transactions</h1>
+                <div class="page-header">
+                    <h1><i class="fas fa-exchange-alt"></i> Transactions</h1>
+                    <div class="page-actions">
+                        <button class="add-btn" onclick="openTransactionModal()">
+                            <i class="fas fa-plus"></i> <span class="desktop-only">Add</span>
+                        </button>
+                    </div>
+                </div>
                 
-                <!-- Filters -->
-                <div class="filters">
+                <!-- Mobile Filters -->
+                <div class="mobile-filters">
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" data-filter="all">All</button>
+                        <button class="filter-tab" data-filter="income">Income</button>
+                        <button class="filter-tab" data-filter="expense">Expense</button>
+                    </div>
+                    <button class="filter-more-btn" onclick="toggleAdvancedFilters()">
+                        <i class="fas fa-filter"></i> More Filters
+                    </button>
+                </div>
+
+                <!-- Desktop Filters -->
+                <div class="filters desktop-filters">
                     <div class="filter-group">
                         <label><i class="fas fa-calendar"></i> Date Range:</label>
                         <input type="date" id="startDate">
@@ -172,40 +371,70 @@
                         </select>
                     </div>
                     <button class="filter-btn" onclick="applyFilters()">
-                        <i class="fas fa-search"></i> Apply Filters
+                        <i class="fas fa-search"></i> Apply
                     </button>
                     <button class="reset-btn" onclick="resetFilters()">
                         <i class="fas fa-undo"></i> Reset
                     </button>
                 </div>
 
-                <!-- Transaction List -->
-                <div class="transaction-table">
-                    <div class="table-header">
-                        <div class="table-controls">
-                            <button class="btn" onclick="exportTransactions()">
-                                <i class="fas fa-download"></i> Export
-                            </button>
-                            <button class="btn" onclick="importTransactions()">
-                                <i class="fas fa-upload"></i> Import
-                            </button>
-                        </div>
+                <!-- Advanced Filters (Mobile) -->
+                <div class="advanced-filters hidden" id="advancedFilters">
+                    <div class="filter-row">
+                        <label>From Date:</label>
+                        <input type="date" id="mobileStartDate">
                     </div>
-                    <table id="transactionTable">
-                        <thead>
-                            <tr>
-                                <th><i class="fas fa-calendar"></i> Date</th>
-                                <th><i class="fas fa-align-left"></i> Description</th>
-                                <th><i class="fas fa-tags"></i> Category</th>
-                                <th><i class="fas fa-dollar-sign"></i> Amount</th>
-                                <th><i class="fas fa-exchange-alt"></i> Type</th>
-                                <th><i class="fas fa-cogs"></i> Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="transactionTableBody">
-                            <!-- Populated by JavaScript -->
-                        </tbody>
-                    </table>
+                    <div class="filter-row">
+                        <label>To Date:</label>
+                        <input type="date" id="mobileEndDate">
+                    </div>
+                    <div class="filter-row">
+                        <label>Category:</label>
+                        <select id="mobileCategoryFilter">
+                            <option value="all">All Categories</option>
+                        </select>
+                    </div>
+                    <div class="filter-actions">
+                        <button class="apply-btn" onclick="applyMobileFilters()">Apply</button>
+                        <button class="clear-btn" onclick="clearMobileFilters()">Clear</button>
+                    </div>
+                </div>
+
+                <!-- Transaction Table/List -->
+                <div class="transaction-container">
+                    <!-- Mobile Transaction List -->
+                    <div class="mobile-transaction-list mobile-only" id="mobileTransactionList">
+                        <!-- Populated by JavaScript -->
+                    </div>
+
+                    <!-- Desktop Transaction Table -->
+                    <div class="transaction-table desktop-only">
+                        <div class="table-header">
+                            <div class="table-controls">
+                                <button class="btn" onclick="exportTransactions()">
+                                    <i class="fas fa-download"></i> Export
+                                </button>
+                                <button class="btn" onclick="importTransactions()">
+                                    <i class="fas fa-upload"></i> Import
+                                </button>
+                            </div>
+                        </div>
+                        <table id="transactionTable">
+                            <thead>
+                                <tr>
+                                    <th><i class="fas fa-calendar"></i> Date</th>
+                                    <th><i class="fas fa-align-left"></i> Description</th>
+                                    <th><i class="fas fa-tags"></i> Category</th>
+                                    <th><i class="fas fa-rupee-sign"></i> Amount</th>
+                                    <th><i class="fas fa-exchange-alt"></i> Type</th>
+                                    <th><i class="fas fa-cogs"></i> Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactionTableBody">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </section>
@@ -213,12 +442,16 @@
         <!-- Budgets Tab -->
         <section id="budgets" class="tab-content">
             <div class="container">
-                <h1><i class="fas fa-chart-pie"></i> Budget Management</h1>
+                <div class="page-header">
+                    <h1><i class="fas fa-chart-pie"></i> Budget Management</h1>
+                    <div class="page-actions">
+                        <button class="add-btn" onclick="openBudgetModal()">
+                            <i class="fas fa-plus"></i> <span class="desktop-only">Create Budget</span>
+                        </button>
+                    </div>
+                </div>
                 
                 <div class="budget-controls">
-                    <button class="btn primary" onclick="openBudgetModal()">
-                        <i class="fas fa-plus"></i> Create New Budget
-                    </button>
                     <select id="budgetPeriod">
                         <option value="monthly">Monthly</option>
                         <option value="yearly">Yearly</option>
@@ -234,12 +467,13 @@
         <!-- Categories Tab -->
         <section id="categories" class="tab-content">
             <div class="container">
-                <h1><i class="fas fa-tags"></i> Category Management</h1>
-                
-                <div class="category-controls">
-                    <button class="btn primary" onclick="openCategoryModal()">
-                        <i class="fas fa-plus"></i> Add Category
-                    </button>
+                <div class="page-header">
+                    <h1><i class="fas fa-tags"></i> Category Management</h1>
+                    <div class="page-actions">
+                        <button class="add-btn" onclick="openCategoryModal()">
+                            <i class="fas fa-plus"></i> <span class="desktop-only">Add Category</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="categories-grid">
@@ -262,7 +496,9 @@
         <!-- Reports Tab -->
         <section id="reports" class="tab-content">
             <div class="container">
-                <h1><i class="fas fa-chart-line"></i> Financial Reports</h1>
+                <div class="page-header">
+                    <h1><i class="fas fa-chart-line"></i> Financial Reports</h1>
+                </div>
                 
                 <div class="report-controls">
                     <div class="report-filters">
@@ -280,7 +516,7 @@
                             <option value="custom">Custom Range</option>
                         </select>
                         <button class="btn primary" onclick="generateReport()">
-                            <i class="fas fa-chart-bar"></i> Generate Report
+                            <i class="fas fa-chart-bar"></i> Generate
                         </button>
                     </div>
                 </div>
@@ -294,12 +530,13 @@
         <!-- Goals Tab -->
         <section id="goals" class="tab-content">
             <div class="container">
-                <h1><i class="fas fa-bullseye"></i> Financial Goals</h1>
-                
-                <div class="goal-controls">
-                    <button class="btn primary" onclick="openGoalModal()">
-                        <i class="fas fa-plus"></i> Set New Goal
-                    </button>
+                <div class="page-header">
+                    <h1><i class="fas fa-bullseye"></i> Financial Goals</h1>
+                    <div class="page-actions">
+                        <button class="add-btn" onclick="openGoalModal()">
+                            <i class="fas fa-plus"></i> <span class="desktop-only">Set Goal</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="goals-grid" id="goalsGrid">
@@ -311,12 +548,13 @@
         <!-- Recurring Tab -->
         <section id="recurring" class="tab-content">
             <div class="container">
-                <h1><i class="fas fa-redo"></i> Recurring Transactions</h1>
-                
-                <div class="recurring-controls">
-                    <button class="btn primary" onclick="openRecurringModal()">
-                        <i class="fas fa-plus"></i> Add Recurring Transaction
-                    </button>
+                <div class="page-header">
+                    <h1><i class="fas fa-redo"></i> Recurring Transactions</h1>
+                    <div class="page-actions">
+                        <button class="add-btn" onclick="openRecurringModal()">
+                            <i class="fas fa-plus"></i> <span class="desktop-only">Add Recurring</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="recurring-list" id="recurringList">
@@ -328,13 +566,19 @@
         <!-- About Tab -->
         <section id="about" class="tab-content">
             <div class="container">
-                <h1><i class="fas fa-info-circle"></i> About MRM ERP</h1>
+                <div class="page-header">
+                    <h1><i class="fas fa-info-circle"></i> About MRM ERP</h1>
+                </div>
                 
                 <div class="about-content">
                     <div class="about-header">
                         <img src="https://i.postimg.cc/J0Jw1hMT/image.png" alt="MRM Logo" class="about-logo">
                         <h2>Monthly Recurring Manager</h2>
                         <p class="tagline">World's Most Powerful Expense & Income Management Tool</p>
+                        <div class="currency-note">
+                            <i class="fas fa-globe"></i>
+                            <span>Now with Indian Currency Support (₹)</span>
+                        </div>
                     </div>
 
                     <div class="about-details">
@@ -359,6 +603,21 @@
                     <div class="features-section">
                         <h3><i class="fas fa-star"></i> Key Features</h3>
                         <div class="features-grid">
+                            <div class="feature-item">
+                                <i class="fas fa-mobile-alt"></i>
+                                <h4>Mobile PWA Support</h4>
+                                <p>Install as native app on Android & iOS</p>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-wifi-slash"></i>
+                                <h4>Offline Functionality</h4>
+                                <p>Works completely offline with local storage</p>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-rupee-sign"></i>
+                                <h4>Multi-Currency Support</h4>
+                                <p>Indian Rupee (₹) and 6 other currencies</p>
+                            </div>
                             <div class="feature-item">
                                 <i class="fas fa-tachometer-alt"></i>
                                 <h4>Real-time Dashboard</h4>
@@ -392,15 +651,63 @@
                         </div>
                     </div>
 
+                    <div class="technical-features">
+                        <h3><i class="fas fa-cogs"></i> Technical Features</h3>
+                        <div class="tech-list">
+                            <div class="tech-item">
+                                <i class="fas fa-database"></i>
+                                <span>Local Browser Storage</span>
+                            </div>
+                            <div class="tech-item">
+                                <i class="fas fa-sync"></i>
+                                <span>Automatic Data Sync</span>
+                            </div>
+                            <div class="tech-item">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>Secure Data Handling</span>
+                            </div>
+                            <div class="tech-item">
+                                <i class="fas fa-tablet-alt"></i>
+                                <span>Responsive Design</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="copyright">
                         <p>&copy; 2025 ANAS LILA SOFTWARE. All rights reserved.</p>
+                        <p class="build-info">Built with ❤️ for Indian users with ₹ support</p>
                     </div>
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- Modals -->
+    <!-- Floating Action Button (Mobile) -->
+    <div class="fab-container" id="fabContainer">
+        <button class="fab" onclick="toggleFabMenu()">
+            <i class="fas fa-plus" id="fabIcon"></i>
+        </button>
+        <div class="fab-menu" id="fabMenu">
+            <button class="fab-item income" onclick="openTransactionModal('income'); closeFabMenu();">
+                <i class="fas fa-arrow-up"></i>
+                <span>Income</span>
+            </button>
+            <button class="fab-item expense" onclick="openTransactionModal('expense'); closeFabMenu();">
+                <i class="fas fa-arrow-down"></i>
+                <span>Expense</span>
+            </button>
+            <button class="fab-item budget" onclick="openBudgetModal(); closeFabMenu();">
+                <i class="fas fa-chart-pie"></i>
+                <span>Budget</span>
+            </button>
+            <button class="fab-item goal" onclick="openGoalModal(); closeFabMenu();">
+                <i class="fas fa-bullseye"></i>
+                <span>Goal</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Modals (Same as before but with currency support) -->
     <!-- Transaction Modal -->
     <div id="transactionModal" class="modal">
         <div class="modal-content">
@@ -417,8 +724,11 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="transactionAmount"><i class="fas fa-dollar-sign"></i> Amount:</label>
-                    <input type="number" id="transactionAmount" step="0.01" min="0" required>
+                    <label for="transactionAmount"><i class="fas fa-rupee-sign"></i> Amount:</label>
+                    <div class="amount-input">
+                        <span class="currency-symbol" id="amountCurrencySymbol">₹</span>
+                        <input type="number" id="transactionAmount" step="0.01" min="0" required>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="transactionDescription"><i class="fas fa-align-left"></i> Description:</label>
@@ -461,8 +771,11 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="budgetAmount"><i class="fas fa-dollar-sign"></i> Budget Amount:</label>
-                    <input type="number" id="budgetAmount" step="0.01" min="0" required>
+                    <label for="budgetAmount"><i class="fas fa-rupee-sign"></i> Budget Amount:</label>
+                    <div class="amount-input">
+                        <span class="currency-symbol" id="budgetCurrencySymbol">₹</span>
+                        <input type="number" id="budgetAmount" step="0.01" min="0" required>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="budgetPeriodType"><i class="fas fa-calendar"></i> Period:</label>
@@ -501,7 +814,7 @@
                 <div class="form-group">
                     <label for="categoryIcon"><i class="fas fa-icons"></i> Icon:</label>
                     <select id="categoryIcon" required>
-                        <option value="fas fa-dollar-sign">💰 Money</option>
+                        <option value="fas fa-rupee-sign">💰 Money</option>
                         <option value="fas fa-home">🏠 Home</option>
                         <option value="fas fa-car">🚗 Transport</option>
                         <option value="fas fa-utensils">🍽️ Food</option>
@@ -544,8 +857,11 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="goalTarget"><i class="fas fa-dollar-sign"></i> Target Amount:</label>
-                    <input type="number" id="goalTarget" step="0.01" min="0" required>
+                    <label for="goalTarget"><i class="fas fa-rupee-sign"></i> Target Amount:</label>
+                    <div class="amount-input">
+                        <span class="currency-symbol" id="goalCurrencySymbol">₹</span>
+                        <input type="number" id="goalTarget" step="0.01" min="0" required>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="goalDeadline"><i class="fas fa-calendar"></i> Target Date:</label>
@@ -575,8 +891,11 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="recurringAmount"><i class="fas fa-dollar-sign"></i> Amount:</label>
-                    <input type="number" id="recurringAmount" step="0.01" min="0" required>
+                    <label for="recurringAmount"><i class="fas fa-rupee-sign"></i> Amount:</label>
+                    <div class="amount-input">
+                        <span class="currency-symbol" id="recurringCurrencySymbol">₹</span>
+                        <input type="number" id="recurringAmount" step="0.01" min="0" required>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="recurringDescription"><i class="fas fa-align-left"></i> Description:</label>
